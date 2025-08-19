@@ -129,7 +129,7 @@ class FortiManagerAPIClient:
     def execute_request(self, method: str, endpoint: str, data: Optional[Dict[str, Any]] = None,
                        query_params: Optional[List[str]] = None) -> tuple[int, Dict[str, Any]]:
         method = method.lower()
-        if method not in ['get', 'post', 'put', 'delete']:
+        if method not in ['get', 'add', 'set', 'update', 'delete', 'exec']:
             raise ValueError(f"Unsupported HTTP method: {method}")
         if not endpoint.startswith('/'):
             endpoint = '/' + endpoint
@@ -139,12 +139,14 @@ class FortiManagerAPIClient:
                 kwargs = data or {}
                 if method == 'get':
                     return fmg.get(endpoint, *args)
-                elif method == 'post':
+                elif method == 'add':
                     return fmg.add(endpoint, *args, **kwargs)
-                elif method == 'put':
+                elif method in ['set', 'update']:
                     return fmg.update(endpoint, *args, **kwargs)
                 elif method == 'delete':
                     return fmg.delete(endpoint, *args)
+                elif method == 'exec':
+                    return fmg.execute(endpoint, *args, **kwargs)
                 else:
                     return -5, {"error": "Unsupported method", "details": f"Method {method} not supported"}
         except (FMGConnectionError, FMGConnectTimeout) as e:
@@ -203,13 +205,16 @@ Examples:
   %(prog)s -m get -e /pm/config/global/obj/firewall/address
 
   # Add a new firewall address to the 'root' ADOM
-  %(prog)s -m post -e /pm/config/adom/root/obj/firewall/address -d '{"name": "new-address", "subnet": "10.0.0.0/24"}'
+  %(prog)s -m add -e /pm/config/adom/root/obj/firewall/address -d '{"name": "new-address", "subnet": "10.0.0.0/24"}'
 
   # Update (set) an existing firewall address in the Global scope
-  %(prog)s -m put -e /pm/config/global/obj/firewall/address/existing-address -d '{"subnet": "10.1.1.1/32", "comment": "Updated"}'
+  %(prog)s -m set -e /pm/config/global/obj/firewall/address/existing-address -d '{"subnet": "10.1.1.1/32", "comment": "Updated"}'
 
-  # Use a configuration file for credentials
-  %(prog)s -c config.ini -m get -e /pm/config/adom/root/obj/firewall/address
+  # Delete a firewall address object
+  %(prog)s -m delete -e /pm/config/adom/root/obj/firewall/address/old-address
+
+  # Execute a script on a device
+  %(prog)s -m exec -e /dvmdb/adom/root/script/execute -d '{"adom": "root", "scope": [{"name": "MyDevice", "vdom": "root"}], "script": "MyTestScript"}'
 
 Configuration file format (INI):
   [fortimanager]
@@ -233,7 +238,7 @@ Configuration file format (JSON):
     conn_group.add_argument('-p', '--password', metavar='PASS', help='Password for authentication')
     conn_group.add_argument('-k', '--apikey', metavar='KEY', help='API key for authentication')
     req_group = parser.add_argument_group('Request')
-    req_group.add_argument('-m', '--method', required=True, choices=['get', 'post', 'put', 'delete'], help='HTTP method to use')
+    req_group.add_argument('-m', '--method', required=True, choices=['get', 'add', 'set', 'update', 'delete', 'exec'], help='API method to use')
     req_group.add_argument('-e', '--endpoint', required=True, metavar='PATH', help='API endpoint path (e.g., /pm/config/adom/root/obj/firewall/address)')
     req_group.add_argument('-d', '--data', metavar='JSON', help='Request data as JSON string (for POST/PUT)')
     req_group.add_argument('-q', '--query', metavar='PARAM', action='append', help='Query parameters (can be used multiple times)')

@@ -1,4 +1,4 @@
-# FortiManager API Generic Client
+# FortiManager API Easy Client
 
 A simple Python command-line application for interacting with FortiManager devices using the [pyfmg](https://github.com/p4r4n0y1ng/pyfmg) library. This tool is designed to provide a consistent user experience with the [fgt_api_easy](https://github.com/hyyperlite/fgt_api_easy) client.
 
@@ -6,7 +6,7 @@ A simple Python command-line application for interacting with FortiManager devic
 
 - **Authentication**: Supports both API key and username/password authentication.
 - **Configuration**: Load connection details from INI or JSON configuration files.
-- **HTTP Methods**: Full support for `GET`, `POST`, `PUT`, and `DELETE` requests.
+- **HTTP Methods**: Full support for `GET`, `ADD`, `SET`, `UPDATE`, `DELETE`, and `EXEC` requests.
 - **Query Parameters**: Filter, format, and control API output using query parameters.
 - **Data Input**: Easily send JSON data for `POST` and `PUT` requests.
 - **Output Formats**: Choose between `json` (default), `pretty` (colorized JSON), and `table` formats.
@@ -50,7 +50,7 @@ The application is run via the `fmg` bash script, which is a wrapper around the 
 -   `-k, --apikey`: API key for authentication.
 
 #### Request Options
--   `-m, --method`: HTTP method (`get`, `post`, `put`, `delete`). **Required**.
+-   `-m, --method`: HTTP method (`get`, `add`, `set`, `update`, `delete`, `exec`). **Required**.
 -   `-e, --endpoint`: API endpoint path. **Required**.
 -   `-d, --data`: Request data as a JSON string (for `POST`/`PUT`).
 -   `-q, --query`: Query parameters (can be used multiple times).
@@ -85,24 +85,31 @@ Get all firewall address objects from the global configuration database.
 #### 3. Create a New Firewall Address
 Add a new firewall address object to the `root` ADOM using the `-d` flag.
 ```bash
-./fmg -m post -e /pm/config/adom/root/obj/firewall/address -d '{"name": "new-address", "subnet": "10.0.0.0/24"}'
+./fmg -m add -e /pm/config/adom/root/obj/firewall/address -d '{"name": "new-address", "subnet": "10.0.0.0/24"}'
 ```
 
 #### 4. Update an Existing Firewall Address
 Update (set) an existing firewall address object in the global scope.
 ```bash
-./fmg -m put -e /pm/config/global/obj/firewall/address/existing-address -d '{"subnet": "10.1.1.1/32", "comment": "Updated"}'
+./fmg -m set -e /pm/config/global/obj/firewall/address/existing-address -d '{"subnet": "10.1.1.1/32", "comment": "Updated"}'
 ```
 
-#### 5. Use a Configuration File
-Use a configuration file for credentials and specify `table` format.
+#### 5. Delete a Firewall Address
+Delete a firewall address object.
 ```bash
-./fmg -c config.ini -m get -e /pm/config/adom/root/obj/firewall/address --format table
+./fmg -m delete -e /pm/config/adom/root/obj/firewall/address/old-address
 ```
 
 ## Configuration Files
 
 Store connection settings in a configuration file to simplify commands.
+
+### Use a Configuration File
+Use a configuration file for credentials and specify `table` format.
+```bash
+./fmg -c config.ini -m get -e /pm/config/adom/root/obj/firewall/address --format table
+```
+
 
 ### INI Format (`config.ini`)
 ```ini
