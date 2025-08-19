@@ -130,7 +130,7 @@ class FortiManagerAPIClient:
         else:
             return FortiManager(self.host, self.username, self.password, **kwargs)
     def execute_request(self, method: str, endpoint: str, data: Optional[Dict[str, Any]] = None,
-                       query_params: Optional[List[str]] = None) -> tuple[int, Dict[str, Any]]:
+                       query_params: Optional[Dict[str, Any]] = None) -> tuple[int, Dict[str, Any]]:
         method = method.lower()
         if method not in ['get', 'add', 'set', 'update', 'delete', 'exec']:
             raise ValueError(f"Unsupported HTTP method: {method}")
@@ -138,18 +138,19 @@ class FortiManagerAPIClient:
             endpoint = '/' + endpoint
         try:
             with self._create_connection() as fmg:
-                args = query_params or []
                 kwargs = data or {}
+                if query_params:
+                    kwargs.update(query_params)
                 if method == 'get':
-                    return fmg.get(endpoint, *args)
+                    return fmg.get(endpoint, **kwargs)
                 elif method == 'add':
-                    return fmg.add(endpoint, *args, **kwargs)
+                    return fmg.add(endpoint, **kwargs)
                 elif method in ['set', 'update']:
-                    return fmg.update(endpoint, *args, **kwargs)
+                    return fmg.update(endpoint, **kwargs)
                 elif method == 'delete':
-                    return fmg.delete(endpoint, *args)
+                    return fmg.delete(endpoint, **kwargs)
                 elif method == 'exec':
-                    return fmg.execute(endpoint, *args, **kwargs)
+                    return fmg.execute(endpoint, **kwargs)
                 else:
                     return -5, {"error": "Unsupported method", "details": f"Method {method} not supported"}
         except (FMGConnectionError, FMGConnectTimeout) as e:
@@ -194,6 +195,22 @@ def parse_data_argument(data_str: str) -> Dict[str, Any]:
         return json.loads(data_str)
     except json.JSONDecodeError as e:
         raise ValueError(f"Invalid JSON data: {e}")
+
+def parse_query_params(query_args: Optional[List[str]]) -> Dict[str, Any]:
+    """Parses a list of JSON strings into a single dictionary."""
+    if not query_args:
+        return {}
+    params = {}
+    for arg in query_args:
+        try:
+            data = json.loads(arg)
+            if isinstance(data, dict):
+                params.update(data)
+            else:
+                raise ValueError(f"Query parameter is not a JSON object: {arg}")
+        except json.JSONDecodeError as e:
+            raise ValueError(f"Invalid JSON in query parameter: {arg} - {e}")
+    return params
 
 class CustomArgumentParser(argparse.ArgumentParser):
     def error(self, message):
@@ -249,7 +266,7 @@ Configuration file format (JSON):
     req_group.add_argument('-m', '--method', required=True, choices=['get', 'add', 'set', 'update', 'delete', 'exec'], help='API method to use')
     req_group.add_argument('-e', '--endpoint', required=True, metavar='PATH', help='API endpoint path (e.g., /pm/config/adom/root/obj/firewall/address)')
     req_group.add_argument('-d', '--data', metavar='JSON', help='Request data as JSON string (for POST/PUT)')
-    req_group.add_argument('-q', '--query', metavar='PARAM', action='append', help='Query parameters (can be used multiple times)')
+    req_group.add_argument('-q', '--query', metavar='JSON', action='append', help='Query parameters as a JSON string (e.g., \'{"fields": ["name"]}\')')
     opt_group = parser.add_argument_group('Options')
     opt_group.add_argument('--no-ssl', action='store_true', help='Use HTTP instead of HTTPS')
     opt_group.add_argument('--verify-ssl', action='store_true', help='Verify SSL certificates')
@@ -291,6 +308,15 @@ Configuration file format (JSON):
         except ValueError as e:
             print(f"Error parsing data: {e}", file=sys.stderr)
             sys.exit(1)
+
+    query_params = {}
+    if args.query:
+        try:
+            query_params = parse_query_params(args.query)
+        except ValueError as e:
+            print(f"Error parsing query parameters: {e}", file=sys.stderr)
+            sys.exit(1)
+
     try:
         client = FortiManagerAPIClient(
             host=host,
@@ -306,7 +332,7 @@ Configuration file format (JSON):
             method=args.method,
             endpoint=args.endpoint,
             data=request_data,
-            query_params=args.query
+            query_params=query_params
         )
         print(f"Status Code: {status_code}")
         if args.format == 'table':
