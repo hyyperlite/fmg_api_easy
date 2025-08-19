@@ -217,6 +217,16 @@ class CustomArgumentParser(argparse.ArgumentParser):
         self.print_usage(sys.stderr)
         self.exit(2, f'\n{self.prog}: error: {message}\n')
 
+def filter_data(data: Any, fields: List[str]) -> Any:
+    """Recursively filters dictionaries in a list to include only specified fields."""
+    if not fields:
+        return data
+    if isinstance(data, list):
+        return [filter_data(item, fields) for item in data]
+    if isinstance(data, dict):
+        return {key: value for key, value in data.items() if key in fields}
+    return data
+
 def main():
     parser = CustomArgumentParser(
         description="FortiManager API Client - Simple CLI for FortiManager JSON API",
@@ -275,10 +285,10 @@ Configuration file format (JSON):
     opt_group.add_argument('--debug', action='store_true', help='Enable debug mode')
     opt_group.add_argument('--format', choices=['json', 'pretty', 'table'], default='json',
                           help='Output format (default: json)')
+    opt_group.add_argument('--fields', type=str, metavar='FIELDS', help='Comma-separated list of fields to include in the output (all formats)')
     table_group = parser.add_argument_group('Table Options')
     table_group.add_argument('--table-max-width', type=int, default=50, metavar='WIDTH', help='Maximum width for table cell content (default: 50)')
     table_group.add_argument('--table-max-fields', type=int, default=6, metavar='NUM', help='Maximum number of fields to auto-detect for table display (default: 6, set to 0 for unlimited)')
-    table_group.add_argument('--table-fields', type=str, metavar='FIELDS', help='Comma-separated list of fields for table output')
     args = parser.parse_args()
     config = {}
     if args.config:
@@ -334,13 +344,17 @@ Configuration file format (JSON):
             data=request_data,
             query_params=query_params
         )
+
+        output_fields = [f.strip() for f in args.fields.split(',')] if args.fields else []
+        filtered_response = filter_data(response, output_fields) if output_fields else response
+
         print(f"Status Code: {status_code}")
+
         if args.format == 'table':
             try:
-                table_fields = [f.strip() for f in args.table_fields.split(',')] if args.table_fields else None
                 table_output = TableFormatter.format_table(
-                    response,
-                    table_fields=table_fields,
+                    filtered_response,
+                    table_fields=output_fields or None,
                     max_fields=args.table_max_fields if args.table_max_fields != 0 else 999,
                     max_width=args.table_max_width
                 )
@@ -348,12 +362,13 @@ Configuration file format (JSON):
             except Exception as e:
                 print(f"Error formatting table: {e}", file=sys.stderr)
                 print("Falling back to JSON output:")
-                print(json.dumps(response, indent=2, default=str))
+                print(json.dumps(filtered_response, indent=2, default=str))
         elif args.format == 'json':
-            print(f"Response: {json.dumps(response, default=str)}")
-        else:
+            print(f"Response: {json.dumps(filtered_response, default=str)}")
+        else: # pretty
             print("Response:")
-            print(json.dumps(response, indent=2, default=str))
+            print(json.dumps(filtered_response, indent=2, default=str))
+
         if isinstance(status_code, int):
             if status_code < 0:
                 sys.exit(1)

@@ -57,7 +57,7 @@ The application is run via the `fmg` bash script, which is a wrapper around the 
 
 #### Output and Formatting
 -   `--format`: Output format (`json`, `pretty`, `table`). The `fmg` script defaults to `pretty`.
--   `--table-fields`: Comma-separated list of fields for table output.
+-   `--fields`: Comma-separated list of fields to include in the output (all formats).
 -   `--table-max-width`: Maximum width for table cell content (default: 50).
 -   `--table-max-fields`: Maximum number of fields to auto-detect for tables (default: 6, `0` for unlimited).
 
@@ -101,9 +101,9 @@ Delete a firewall address object.
 ```
 
 #### 6. Get Specific Fields from an Endpoint
-Use the `-q` flag to filter the response and retrieve only specific fields. Note that the API may still return certain essential fields by default.
+Use the `--fields` flag to filter the response and retrieve only specific fields. This works for all output formats.
 ```bash
-./fmg -m get -e /pm/config/adom/root/obj/firewall/address -q '{"fields": ["name", "subnet"]}'
+./fmg -m get -e /pm/config/adom/root/obj/firewall/address --fields name,subnet
 ```
 
 #### 7. Filter Objects Based on a Condition
