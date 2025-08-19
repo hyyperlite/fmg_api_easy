@@ -100,6 +100,18 @@ Delete a firewall address object.
 ./fmg -m delete -e /pm/config/adom/root/obj/firewall/address/old-address
 ```
 
+#### 6. Get Specific Fields from an Endpoint
+Use the `-q` flag to filter the response and retrieve only specific fields. Note that the API may still return certain essential fields by default.
+```bash
+./fmg -m get -e /pm/config/adom/root/obj/firewall/address -q '{"fields": ["name", "subnet"]}'
+```
+
+#### 7. Filter Objects Based on a Condition
+Use the `filter` parameter within the `-q` flag to retrieve a subset of objects. This example filters for firewall addresses of a specific type.
+```bash
+./fmg -m get -e /pm/config/adom/root/obj/firewall/address -q '{"filter": ["type", "==", "ipmask"]}'
+```
+
 ## Configuration Files
 
 Store connection settings in a configuration file to simplify commands.
