@@ -34,7 +34,7 @@ except ImportError:
 class TableFormatter:
     """Dynamically formats FortiManager API responses as tables"""
     @staticmethod
-    def format_table(response_data: Dict[str, Any], max_fields: int = 6, max_width: int = 50) -> str:
+    def format_table(response_data: Dict[str, Any], table_fields: Optional[List[str]] = None, max_fields: int = 6, max_width: int = 50) -> str:
         # Try to extract a list of items from the response
         if isinstance(response_data, dict):
             data_list = response_data.get('results') or response_data.get('data') or response_data.get('items')
@@ -52,14 +52,17 @@ class TableFormatter:
         if not data_list:
             return "No data to display in table format"
 
-        # Auto-detect fields
-        field_counts = {}
-        for item in data_list[:10]:
-            if isinstance(item, dict):
-                for key in item.keys():
-                    field_counts[key] = field_counts.get(key, 0) + 1
-        common_fields = sorted(field_counts.items(), key=lambda x: x[1], reverse=True)
-        fields = [field[0] for field in common_fields[:max_fields]]
+        if table_fields:
+            fields = table_fields
+        else:
+            # Auto-detect fields
+            field_counts = {}
+            for item in data_list[:10]:
+                if isinstance(item, dict):
+                    for key in item.keys():
+                        field_counts[key] = field_counts.get(key, 0) + 1
+            common_fields = sorted(field_counts.items(), key=lambda x: x[1], reverse=True)
+            fields = [field[0] for field in common_fields[:max_fields]]
         if not fields:
             return "No suitable fields found for table display"
 
@@ -192,8 +195,13 @@ def parse_data_argument(data_str: str) -> Dict[str, Any]:
     except json.JSONDecodeError as e:
         raise ValueError(f"Invalid JSON data: {e}")
 
+class CustomArgumentParser(argparse.ArgumentParser):
+    def error(self, message):
+        self.print_usage(sys.stderr)
+        self.exit(2, f'\n{self.prog}: error: {message}\n')
+
 def main():
-    parser = argparse.ArgumentParser(
+    parser = CustomArgumentParser(
         description="FortiManager API Client - Simple CLI for FortiManager JSON API",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
@@ -253,6 +261,7 @@ Configuration file format (JSON):
     table_group = parser.add_argument_group('Table Options')
     table_group.add_argument('--table-max-width', type=int, default=50, metavar='WIDTH', help='Maximum width for table cell content (default: 50)')
     table_group.add_argument('--table-max-fields', type=int, default=6, metavar='NUM', help='Maximum number of fields to auto-detect for table display (default: 6, set to 0 for unlimited)')
+    table_group.add_argument('--table-fields', type=str, metavar='FIELDS', help='Comma-separated list of fields for table output')
     args = parser.parse_args()
     config = {}
     if args.config:
@@ -302,8 +311,10 @@ Configuration file format (JSON):
         print(f"Status Code: {status_code}")
         if args.format == 'table':
             try:
+                table_fields = [f.strip() for f in args.table_fields.split(',')] if args.table_fields else None
                 table_output = TableFormatter.format_table(
                     response,
+                    table_fields=table_fields,
                     max_fields=args.table_max_fields if args.table_max_fields != 0 else 999,
                     max_width=args.table_max_width
                 )
