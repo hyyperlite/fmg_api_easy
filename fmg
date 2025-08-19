@@ -1,0 +1,30 @@
+#!/bin/bash
+# Wrapper script for fmg_api_client.py
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+VENV_DIR="$SCRIPT_DIR/../.venv"
+PYTHON_BIN="$VENV_DIR/bin/python3"
+CLIENT="$SCRIPT_DIR/fmg_api_client.py"
+
+# Check if --format is already specified
+format_specified=false
+for arg in "$@"; do
+    if [[ "$arg" == "--format" ]] || [[ "$arg" == "--format="* ]]; then
+        format_specified=true
+        break
+    fi
+done
+
+# If --format is not specified, add --format pretty
+if [ "$format_specified" = false ]; then
+    if [ -x "$PYTHON_BIN" ]; then
+        "$PYTHON_BIN" "$CLIENT" "$@" --format pretty
+    else
+        python3 "$CLIENT" "$@" --format pretty
+    fi
+else
+    if [ -x "$PYTHON_BIN" ]; then
+        "$PYTHON_BIN" "$CLIENT" "$@"
+    else
+        python3 "$CLIENT" "$@"
+    fi
+fi

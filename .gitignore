@@ -1,0 +1,45 @@
+# Python standard ignores
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+*.log
+*.sqlite3
+*.db
+*.bak
+*.swp
+*.swo
+*.tmp
+*.env
+.env/
+.venv/
+venv/
+ENV/
+.envrc
+*.env
+*.DS_Store
+*.coverage
+.coverage/
+htmlcov/
+.mypy_cache/
+.pytest_cache/
+.tox/
+*.pot
+*.mo
+*.orig
+*.rej
+*.~
+
+# VSCode
+.vscode/
+
+# Data and config directories
+/data/
+data/*
+/config/
+config/*
