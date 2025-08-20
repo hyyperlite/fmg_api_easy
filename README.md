@@ -58,7 +58,7 @@ The application is run via the `fmg` bash script, which is a wrapper around the 
 #### Output and Formatting
 -   `--format`: Output format (`json`, `pretty`, `table`). The `fmg` script defaults to `pretty`.
 -   `--fields`: Comma-separated list of fields to include in the output (all formats).
--   `--table-max-width`: Maximum width for table cell content (default: 50).
+-   `--table-max-width`: Maximum width for table cell content (default: 30).
 -   `--table-max-fields`: Maximum number of fields to auto-detect for tables (default: 6, `0` for unlimited).
 
 #### Additional Options
@@ -100,17 +100,25 @@ Delete a firewall address object.
 ./fmg -m delete -e /pm/config/adom/root/obj/firewall/address/old-address
 ```
 
-#### 6. Get Specific Fields from an Endpoint
-Use the `--fields` flag to filter the response and retrieve only specific fields. This works for all output formats.
-```bash
-./fmg -m get -e /pm/config/adom/root/obj/firewall/address --fields name,subnet
-```
-
-#### 7. Filter Objects Based on a Condition
+#### 6. Filter Objects Based on a Condition (inside query)
 Use the `filter` parameter within the `-q` flag to retrieve a subset of objects. This example filters for firewall addresses of a specific type.
 ```bash
 ./fmg -m get -e /pm/config/adom/root/obj/firewall/address -q '{"filter": ["type", "==", "ipmask"]}'
 ```
+
+#### 7. Output Specific Fields from an Endpoint (API query filter)
+Use the `--fields` flag to filter the response and retrieve only specific fields. This works for all output formats. This filter is an output filter, it filters from the receivied data not in the API query. (sometimes FMG returns some set of fields regardless of query filter)
+```bash
+./fmg -m get -e /pm/config/adom/root/obj/firewall/address '{"fields": ["name", "type", "route-tag"]}
+```
+
+
+#### 8. Output Specific Fields from an Endpoint (post response filter)
+Use the `--fields` flag to filter the response and retrieve only specific fields. This works for all output formats. This filter is an output filter, it filters from the receivied data not in the API query.
+```bash
+./fmg -m get -e /pm/config/adom/root/obj/firewall/address --fields name,subnet
+```
+
 
 ## Configuration Files
 

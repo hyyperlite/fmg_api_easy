@@ -34,7 +34,7 @@ except ImportError:
 class TableFormatter:
     """Dynamically formats FortiManager API responses as tables"""
     @staticmethod
-    def format_table(response_data: Dict[str, Any], table_fields: Optional[List[str]] = None, max_fields: int = 6, max_width: int = 50) -> str:
+    def format_table(response_data: Dict[str, Any], table_fields: Optional[List[str]] = None, max_fields: int = 6, max_width: int = 30) -> str:
         # Try to extract a list of items from the response
         if isinstance(response_data, dict):
             data_list = response_data.get('results') or response_data.get('data') or response_data.get('items')
@@ -74,11 +74,10 @@ class TableFormatter:
             for field in fields:
                 value = item.get(field, "-")
                 formatted_value = TableFormatter._flatten_value(value)
-                if max_width and len(formatted_value) > max_width:
-                    formatted_value = formatted_value[:max_width-3] + "..."
                 row.append(formatted_value)
             rows.append(row)
-        table = tabulate(rows, headers=headers, tablefmt="grid", stralign="left")
+        
+        table = tabulate(rows, headers=headers, tablefmt="grid", stralign="left", maxcolwidths=[max_width] * len(headers))
         summary = f"{len(data_list)} result(s) found"
         return f"{summary}\n{table}"
 
@@ -287,7 +286,7 @@ Configuration file format (JSON):
                           help='Output format (default: json)')
     opt_group.add_argument('--fields', type=str, metavar='FIELDS', help='Comma-separated list of fields to include in the output (all formats)')
     table_group = parser.add_argument_group('Table Options')
-    table_group.add_argument('--table-max-width', type=int, default=50, metavar='WIDTH', help='Maximum width for table cell content (default: 50)')
+    table_group.add_argument('--table-max-width', type=int, default=30, metavar='WIDTH', help='Maximum width for table cell content (default: 30)')
     table_group.add_argument('--table-max-fields', type=int, default=6, metavar='NUM', help='Maximum number of fields to auto-detect for table display (default: 6, set to 0 for unlimited)')
     args = parser.parse_args()
     config = {}
