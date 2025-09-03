@@ -36,9 +36,9 @@ A simple Python command-line application for interacting with FortiManager devic
     pip install -r requirements.txt
     ```
 
-## Usage
+## Usage (via CLI)
 
-The application is run via the `fmg` bash script, which is a wrapper around the `fmg_api_client.py` script.
+The application is run via the `fmg` bash script, which is a wrapper around the `fmg_api_client.py` script. (Can run directly with fmg_api_client.py, fmg is just shorter and defaults to JSON-pretty output).
 
 ### Command-Line Arguments
 
@@ -68,9 +68,6 @@ The application is run via the `fmg` bash script, which is a wrapper around the 
 -   `--timeout`: Request timeout in seconds (default: 300).
 -   `--debug`: Enable debug mode.
 
-### Shortcut Script
-
-The fmg_api_client.py is the main application and can be executed directly.  However, to simplify usage when using directly from the CLI a shortcut bash script "fmg" is also included.  This script simply executes fmg_api_client.py but with a shoter name and also defaults to using the output format JSON pretty which is more human readable than the default JSON format the fmg_api_client.py defaults to.  It is really just to shorten the command but has same results as you could just specify --format {json|pretty|table} in either case.
 
 ### Examples
 
